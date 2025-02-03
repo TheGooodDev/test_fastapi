@@ -1,6 +1,19 @@
 # Login heroku
 heroku container:login
 
-heroku create streamlit-final-app
+# create app on heroku
+heroku create ynov-api
 
-docker build . -t streamlit-final-app
+# docker on windows
+docker build . -t ynov-api
+
+
+# tag image docker au register heroku
+
+docker tag ynov-api registry.heroku.com/ynov-api/web
+
+#push
+docker push registry.heroku.com/ynov-api/web
+
+#release
+heroku container:release web -a ynov-api

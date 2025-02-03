@@ -1,6 +1,11 @@
 from fastapi import FastAPI, File, UploadFile
 import pandas as pd
 import pickle
+from mlflow import MlflowClient, pyfunc
+import os
+import numpy as np
+
+
 
 tags = [
     {
@@ -97,3 +102,32 @@ def upload_file(file:UploadFile=File(...)):
         pred = model.predict(X)
 
         return [int(x) for x in pred]
+
+client = MlflowClient('https://quera-server-mlflow-cda209265623.herokuapp.com/')
+model_path = client.get_registered_model('Ever_Married').latest_versions[0].source
+model_mlflow = pyfunc.load_model(model_path)
+@app.post('/predict_mlflow', tags=["Models"])
+def predict_mlflow(data: Prediction):
+    data_dict = dict(data)
+
+    df = pd.DataFrame([data_dict])
+    pred = model_mlflow.predict(df)
+
+    prediction_value = int(pred[0])  
+
+    return {prediction_value}
+
+model_mnist_path = client.get_registered_model('Mnist_Felicien').latest_versions[0].source
+model_mnist = pyfunc.load_model(model_mnist_path)
+@app.post('/predict_mnist', tags=["Models"])
+def predict_mnist(file:UploadFile=File(...)):
+    #img
+    img = file.file
+    img = np.frombuffer(img.read(), np.uint8)
+    img = img.reshape((1, 28, 28))
+
+    pred = model_mnist.predict(img)
+
+    prediction_value = int(pred[0])
+
+    return {prediction_value}
